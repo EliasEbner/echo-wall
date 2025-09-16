@@ -90,8 +90,8 @@ func Message(db *sql.DB) http.HandlerFunc {
 
 		// POST /message body:models.MessageCreate -> 200 int -> 404
 		case http.MethodPost:
-			var message models.MessageCreate
-			err := json.NewDecoder(request.Body).Decode(&message)
+			var messageCreate models.MessageCreate
+			err := json.NewDecoder(request.Body).Decode(&messageCreate)
 			if err != nil {
 				http.Error(writer, `Message needs to have the following body:
 					{
@@ -99,8 +99,16 @@ func Message(db *sql.DB) http.HandlerFunc {
 						body:string
 					}`, http.StatusBadRequest)
 			}
-			
-			rows, 
+
+			var insertedMessageId int
+			err = db.QueryRow("INSERT INTO messages(username, body) VALUES ($1, $2) RETURNING id", messageCreate.Username, messageCreate.Body).Scan(&insertedMessageId)
+			if err != nil {
+				http.Error(writer, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			writer.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(writer).Encode(insertedMessageId)
 
 		default:
 			http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
