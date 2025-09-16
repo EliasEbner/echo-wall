@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 func Messages(db *sql.DB) http.HandlerFunc {
@@ -40,7 +41,7 @@ func Messages(db *sql.DB) http.HandlerFunc {
 			}
 
 			// get db rows
-			rows, err := db.Query("SELECT * FROM messages LIMIT $1 OFFSET $2", limit, offset)
+			rows, err := db.Query("SELECT id, username, body, created_at FROM messages LIMIT $1 OFFSET $2", limit, offset)
 			if err != nil {
 				http.Error(writer, err.Error(), http.StatusInternalServerError)
 				return
@@ -63,7 +64,7 @@ func Messages(db *sql.DB) http.HandlerFunc {
 			json.NewEncoder(writer).Encode(messages)
 
 		default:
-			http.Error(writer, "method not allowed", http.StatusMethodNotAllowed)
+			http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	}
 }
@@ -71,10 +72,38 @@ func Messages(db *sql.DB) http.HandlerFunc {
 func Message(db *sql.DB) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		switch request.Method {
+		// GET /message/{id} -> 200 models.Message | 404
 		case http.MethodGet:
+			messageId := strings.TrimPrefix(request.URL.Path, "/message/")
+			var message models.Message
+			err := db.QueryRow("SELECT id, username, body, created_at FROM messages WHERE id = $1", messageId).Scan(&message)
+			if err == sql.ErrNoRows {
+				http.Error(writer, "The message with the specified id does not exist.", http.StatusNotFound)
+				return
+			} else if err != nil {
+				http.Error(writer, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			writer.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(writer).Encode(message)
+
+		// POST /message body:models.MessageCreate -> 200 int -> 404
+		case http.MethodPost:
+			var message models.MessageCreate
+			err := json.NewDecoder(request.Body).Decode(&message)
+			if err != nil {
+				http.Error(writer, `Message needs to have the following body:
+					{
+						username:string
+						body:string
+					}`, http.StatusBadRequest)
+			}
+			
+			rows, 
 
 		default:
-			http.Error(writer, "method not allowed", http.StatusMethodNotAllowed)
+			http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	}
 }
