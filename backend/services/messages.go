@@ -2,11 +2,16 @@ package services
 
 import (
 	"database/sql"
+	"echo-wall/database"
 	"echo-wall/models"
 	"encoding/json"
+	"io"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"golang.org/x/net/websocket"
 )
 
 func Messages(db *sql.DB) http.HandlerFunc {
@@ -41,24 +46,13 @@ func Messages(db *sql.DB) http.HandlerFunc {
 			}
 
 			// get db rows
-			rows, err := db.Query("SELECT id, username, body, created_at FROM messages LIMIT $1 OFFSET $2", limit, offset)
+			messages, err := database.GetMessages(db, limit, offset)
 			if err != nil {
 				http.Error(writer, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			defer rows.Close()
 
-			// parse rows to Message array
-			var messages []models.Message
-			for rows.Next() {
-				var message models.Message
-				err := rows.Scan(&message.Id, &message.Username, &message.Body, &message.CreatedAt)
-				if err != nil {
-					http.Error(writer, err.Error(), http.StatusInternalServerError)
-					return
-				}
-				messages = append(messages, message)
-			}
+			log.Print(messages)
 
 			writer.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(writer).Encode(messages)
@@ -74,9 +68,15 @@ func Message(db *sql.DB) http.HandlerFunc {
 		switch request.Method {
 		// GET /message/{id} -> 200 models.Message | 404
 		case http.MethodGet:
-			messageId := strings.TrimPrefix(request.URL.Path, "/message/")
+			messageIdStr := strings.TrimPrefix(request.URL.Path, "/message/")
+			messageId, err := strconv.ParseInt(messageIdStr, 10, 32)
+			if err != nil {
+				http.Error(writer, "Invalid message id", http.StatusBadRequest)
+				return
+			}
+
 			var message models.Message
-			err := db.QueryRow("SELECT id, username, body, created_at FROM messages WHERE id = $1", messageId).Scan(&message)
+			message, err = database.GetMessage(db, int(messageId))
 			if err == sql.ErrNoRows {
 				http.Error(writer, "The message with the specified id does not exist.", http.StatusNotFound)
 				return
@@ -101,7 +101,7 @@ func Message(db *sql.DB) http.HandlerFunc {
 			}
 
 			var insertedMessageId int
-			err = db.QueryRow("INSERT INTO messages(username, body) VALUES ($1, $2) RETURNING id", messageCreate.Username, messageCreate.Body).Scan(&insertedMessageId)
+			insertedMessageId, err = database.CreateMessage(db, messageCreate)
 			if err != nil {
 				http.Error(writer, err.Error(), http.StatusInternalServerError)
 				return
@@ -112,6 +112,35 @@ func Message(db *sql.DB) http.HandlerFunc {
 
 		default:
 			http.Error(writer, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	}
+}
+
+func Echo(db *sql.DB) websocket.Handler {
+	return func(ws *websocket.Conn) {
+		var msg models.MessageCreate
+		for {
+			err := websocket.Message.Receive(ws, &msg)
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				continue
+			}
+			var insertedMessageId int
+			insertedMessageId, err = database.CreateMessage(db, msg)
+			if err != nil {
+				// TODO: better error handling
+				return
+			}
+
+			var insertedMessage models.Message
+			insertedMessage, err = database.GetMessage(db, insertedMessageId)
+			if err != nil {
+				// TODO: better error handling
+				return
+			}
+			websocket.Message.Send(ws, insertedMessage)
 		}
 	}
 }
