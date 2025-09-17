@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
-	"time"
 )
 
 var ipLimiters = struct {
