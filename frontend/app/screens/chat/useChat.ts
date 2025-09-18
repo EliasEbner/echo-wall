@@ -22,24 +22,54 @@ export function useChat() {
 
     fetch(`${API_URL}/messages?${params}`).then((response) => {
       response.json().then((data) => {
-        setMessages(data);
+        const tempMessages: Message[] = [];
+        for (const element of data) {
+          const tempMessage: Message = {
+            body: element["body"],
+            createdAt: element["created_at"],
+            id: element["id"],
+            username: element["username"],
+          };
+          tempMessages.push(tempMessage);
+        }
+        setMessages(tempMessages);
       });
     });
   }, []);
 
   useEffect(() => {
-    if (messages) {
-      setMessages([message, ...messages]);
-    } else {
-      setMessages([message]);
+    if (message) {
+      const tempMessage: Message = {
+        body: message["body"],
+        createdAt: message["created_at"],
+        id: message["id"],
+        username: message["username"],
+      };
+      if (messages) {
+        setMessages([tempMessage, ...messages]);
+      } else {
+        setMessages([tempMessage]);
+      }
     }
-  }, [message]);
+  }, [message, messages]);
 
   const onSend = useCallback(() => {
     if (composedMessage && username) {
-      send({ username, body: composedMessage } satisfies MessageCreate);
+      const data = JSON.stringify({
+        username,
+        body: composedMessage,
+      } satisfies MessageCreate);
+      console.log(data);
+      send(data);
     }
-  }, [composedMessage]);
+  }, [composedMessage, send, username]);
 
-  return { messages, connected, error, onSend };
+  return {
+    messages,
+    connected,
+    error,
+    onSend,
+    setComposedMessage,
+    composedMessage,
+  };
 }

@@ -52,8 +52,6 @@ func Messages(db *sql.DB) http.HandlerFunc {
 				return
 			}
 
-			log.Print(messages)
-
 			writer.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(writer).Encode(messages)
 
@@ -118,15 +116,19 @@ func Message(db *sql.DB) http.HandlerFunc {
 
 func Echo(db *sql.DB) websocket.Handler {
 	return func(ws *websocket.Conn) {
+		decoder := json.NewDecoder(ws)
+		encoder := json.NewEncoder(ws)
 		var msg models.MessageCreate
 		for {
-			err := websocket.Message.Receive(ws, &msg)
+			err := decoder.Decode(&msg)
+			log.Println(msg)
 			if err != nil {
 				if err == io.EOF {
 					break
 				}
 				continue
 			}
+			log.Println(msg)
 			var insertedMessageId int
 			insertedMessageId, err = database.CreateMessage(db, msg)
 			if err != nil {
@@ -140,7 +142,7 @@ func Echo(db *sql.DB) websocket.Handler {
 				// TODO: better error handling
 				return
 			}
-			websocket.Message.Send(ws, insertedMessage)
+			encoder.Encode(insertedMessage)
 		}
 	}
 }

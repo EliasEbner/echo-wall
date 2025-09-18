@@ -1,27 +1,35 @@
 import { Box } from "~/components/box/box";
-import type { Route } from "../../+types/root";
 import { useChat } from "./useChat";
-
-export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
-  ];
-}
+import { TextInput } from "~/components/textInput/textInput";
+import { Button } from "~/components/button/button";
 
 export default function Chat() {
-  const { messages } = useChat();
+  const {
+    messages,
+    connected,
+    error,
+    onSend,
+    setComposedMessage,
+    composedMessage,
+  } = useChat();
 
   return (
     <div className="w-full h-full flex flex-col gap-2 justify-center items-center">
       <Box>
         {messages?.map((message) => (
-          <>
+          <div key={`message-${message.id}`}>
             {message.username} {message.body}
-          </>
+          </div>
         ))}
       </Box>
-      <Box>Write a message...</Box>
+      <div className="flex flex-row gap-2">
+        <TextInput
+          onChange={setComposedMessage}
+          value={composedMessage}
+          label="message"
+        />
+        <Button onClick={onSend}>Send</Button>
+      </div>
     </div>
   );
 }
