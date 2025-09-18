@@ -1,6 +1,6 @@
-import { Box } from "~/components/Box/box";
-import type { Route } from "../+types/root";
-import { useHome } from "./useHome";
+import { Box } from "~/components/box/box";
+import type { Route } from "../../+types/root";
+import { useChat } from "./useChat";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -9,8 +9,8 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export default function Home() {
-  const { messages } = useHome();
+export default function Chat() {
+  const { messages } = useChat();
 
   return (
     <div className="w-full h-full flex flex-col gap-2 justify-center items-center">

@@ -4,3 +4,8 @@ export type Message = {
   body: string;
   createdAt: Date;
 };
+
+export type MessageCreate = {
+  username: string;
+  body: string;
+};
