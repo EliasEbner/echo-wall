@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { useWebSocket } from "~/hooks/useWebSocket";
 import type { Message, MessageCreate } from "~/types/message";
-import { API_URL } from "~/utils/constants";
+import { API_URL, WS_URL } from "~/utils/constants";
 
 export function useChat() {
   const { username } = useParams();
@@ -10,8 +10,9 @@ export function useChat() {
   const [messages, setMessages] = useState<Message[]>();
   const [composedMessage, setComposedMessage] = useState("");
 
-  const { connected, error, message, send } = useWebSocket(
-    `${API_URL}/messages/subscribe`,
+  const { connected, error, send } = useWebSocket<Message>(
+    `${WS_URL}/messages/subscribe`,
+    setMessages,
   );
 
   useEffect(() => {
@@ -26,7 +27,7 @@ export function useChat() {
         for (const element of data) {
           const tempMessage: Message = {
             body: element["body"],
-            createdAt: element["created_at"],
+            createdAt: element["createdAt"],
             id: element["id"],
             username: element["username"],
           };
@@ -37,30 +38,14 @@ export function useChat() {
     });
   }, []);
 
-  useEffect(() => {
-    if (message) {
-      const tempMessage: Message = {
-        body: message["body"],
-        createdAt: message["created_at"],
-        id: message["id"],
-        username: message["username"],
-      };
-      if (messages) {
-        setMessages([tempMessage, ...messages]);
-      } else {
-        setMessages([tempMessage]);
-      }
-    }
-  }, [message, messages]);
-
   const onSend = useCallback(() => {
     if (composedMessage && username) {
-      const data = JSON.stringify({
+      const data = {
         username,
         body: composedMessage,
-      } satisfies MessageCreate);
-      console.log(data);
+      } satisfies MessageCreate;
       send(data);
+      setComposedMessage("");
     }
   }, [composedMessage, send, username]);
 

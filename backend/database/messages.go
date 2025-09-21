@@ -7,7 +7,7 @@ import (
 
 func CreateMessage(db *sql.DB, message models.MessageCreate) (int, error) {
 	var id int
-	row := db.QueryRow("INSERT INTO messages(username, body) VALUES $1, $2 RETURNING id", message.Username, message.Body)
+	row := db.QueryRow("INSERT INTO messages(username, body) VALUES ($1, $2) RETURNING id", message.Username, message.Body)
 	err := row.Scan(&id)
 	if err != nil {
 		return id, err

@@ -116,33 +116,33 @@ func Message(db *sql.DB) http.HandlerFunc {
 
 func Echo(db *sql.DB) websocket.Handler {
 	return func(ws *websocket.Conn) {
-		decoder := json.NewDecoder(ws)
-		encoder := json.NewEncoder(ws)
 		var msg models.MessageCreate
 		for {
-			err := decoder.Decode(&msg)
-			log.Println(msg)
+			// err := decoder.Decode(&msg)
+			err := websocket.JSON.Receive(ws, &msg)
 			if err != nil {
 				if err == io.EOF {
 					break
 				}
 				continue
 			}
-			log.Println(msg)
 			var insertedMessageId int
 			insertedMessageId, err = database.CreateMessage(db, msg)
 			if err != nil {
-				// TODO: better error handling
+				log.Printf("Couldn't insert message in database: %s\n", err.Error())
 				return
 			}
 
 			var insertedMessage models.Message
 			insertedMessage, err = database.GetMessage(db, insertedMessageId)
 			if err != nil {
-				// TODO: better error handling
+				log.Printf("Couldn't get inserted message from db: %s\n", err.Error())
 				return
 			}
-			encoder.Encode(insertedMessage)
+			err = json.NewEncoder(ws).Encode(insertedMessage)
+			if err != nil {
+				log.Printf("Couldn't encode message: %s\n", err)
+			}
 		}
 	}
 }
