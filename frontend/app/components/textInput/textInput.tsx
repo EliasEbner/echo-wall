@@ -11,14 +11,14 @@ export function TextInput({ onChange, value, label }: TextInputProps) {
 
   return (
     <div className="flex flex-col gap-1 items-start">
-      <label className="pl-4" htmlFor={textInputId}>
+      <label className="pl-4 text-font-secondary" htmlFor={textInputId}>
         {label}
       </label>
       <input
         id={textInputId}
         onChange={onChangeWrapper}
         value={value}
-        className="bg-bg dark:bg-bg-dark focus:outline-none px-4 py-2 rounded-md"
+        className="bg-bg dark:bg-bg-dark focus:outline-none h-12 px-4 py-2 rounded-md duration-200 ease-in-out focus:bg-bg-darker dark:focus:bg-bg-dark-lighter"
       />
     </div>
   );

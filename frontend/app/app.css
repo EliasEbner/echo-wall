@@ -7,10 +7,14 @@
 
   --color-primary: #28a745;
   --color-font: #212529;
-  --color-font-secondary: #6c757d;
+  --color-font-secondary: #7c858d;
   --color-font-dark: #e1e5e9;
   --color-bg: #f1f3f5;
+  --color-bg-darker: #edeff1;
+  --color-bg-lighter: #f5f7f9;
   --color-bg-dark: #111315;
+  --color-bg-dark-lighter: #151719;
+  --color-bg-dark-darker: #0d0f11;
   --color-canvas: #ffffff;
   --color-canvas-dark: #000000;
 }

@@ -17,7 +17,7 @@ export function useChat() {
 
   useEffect(() => {
     const params = new URLSearchParams({
-      limit: "30",
+      limit: "100",
       offset: "0",
     });
 

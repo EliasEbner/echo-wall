@@ -29,7 +29,7 @@ func GetMessage(db *sql.DB, messageId int) (models.Message, error) {
 
 func GetMessages(db *sql.DB, limit int, offset int) ([]models.Message, error) {
 	var messages []models.Message
-	rows, err := db.Query("SELECT id, username, body, created_at FROM messages ORDER BY created_at DESC LIMIT $1 OFFSET $2", limit, offset)
+	rows, err := db.Query("SELECT id, username, body, created_at FROM messages ORDER BY created_at ASC LIMIT $1 OFFSET $2", limit, offset)
 	if err != nil {
 		return messages, err
 	}
