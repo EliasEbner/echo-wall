@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEventHandler,
+} from "react";
 import { useParams } from "react-router";
 import { useWebSocket } from "~/hooks/useWebSocket";
 import type { Message, MessageCreate } from "~/types/message";
@@ -9,6 +15,8 @@ export function useChat() {
 
   const [messages, setMessages] = useState<Message[]>();
   const [composedMessage, setComposedMessage] = useState("");
+
+  const dummyScrollRef = useRef<HTMLDivElement>(null);
 
   const { connected, error, send } = useWebSocket<Message>(
     `${WS_URL}/messages/subscribe`,
@@ -49,6 +57,21 @@ export function useChat() {
     }
   }, [composedMessage, send, username]);
 
+  useEffect(() => {
+    dummyScrollRef.current?.scrollIntoView();
+  }, [messages]);
+
+  const messageInputOnKeyDown: KeyboardEventHandler<HTMLInputElement> =
+    useCallback(
+      (event) => {
+        console.log("hello");
+        if (event.key === "Enter") {
+          onSend();
+        }
+      },
+      [onSend],
+    );
+
   return {
     messages,
     connected,
@@ -56,5 +79,7 @@ export function useChat() {
     onSend,
     setComposedMessage,
     composedMessage,
+    messageInputOnKeyDown,
+    dummyScrollRef,
   };
 }

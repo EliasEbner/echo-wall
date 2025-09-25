@@ -11,13 +11,15 @@ export default function Chat() {
     onSend,
     setComposedMessage,
     composedMessage,
+    messageInputOnKeyDown,
+    dummyScrollRef,
   } = useChat();
 
   return (
     <div className="w-full h-full flex flex-col gap-8 justify-center items-center">
-      <div className="w-full md:w-4/5 lg:w-3/4 xl:w-2/3 2xl:w-1/2">
+      <div className="w-full md:w-5/6 lg:w-4/5 xl:w-3/4 2xl:w-2/3">
         <Box>
-          <div className="overflow-y-auto">
+          <div className="max-h-[70vh] overflow-y-auto">
             {messages?.map((message, index) => (
               <>
                 {new Date(message.createdAt).getDate() !==
@@ -32,20 +34,21 @@ export default function Chat() {
                 )}
                 <div
                   key={`message-${message.id}`}
-                  className="flex justify-between items-start"
+                  className="grid grid-cols-12 grid-flow-row gap-2"
                 >
-                  <div className="w-4/5 flex flex-row gap-4">
-                    <span className="font-bold w-16 overflow-ellipsis">
-                      {message.username}:
+                  <span className="col-span-3 sm:col-span-2 flex flex-row">
+                    <span className="font-bold truncate">
+                      {message.username}
                     </span>
-                    <p>{message.body}</p>
-                  </div>
-                  <span className="text-font-secondary text-xs pr-2 w-30">
+                  </span>
+                  <p className="col-span-9 sm:col-span-8">{message.body}</p>
+                  <span className="text-font-secondary text-xs pr-2 hidden sm:block sm:col-span-2 pt-1 text-right">
                     {new Date(message.createdAt).toLocaleTimeString()}
                   </span>
                 </div>
               </>
             ))}
+            <div ref={dummyScrollRef} />
           </div>
         </Box>
       </div>
@@ -54,6 +57,7 @@ export default function Chat() {
           onChange={setComposedMessage}
           value={composedMessage}
           label="Message"
+          onKeyDown={messageInputOnKeyDown}
         />
         <Button onClick={onSend}>Send</Button>
       </div>
